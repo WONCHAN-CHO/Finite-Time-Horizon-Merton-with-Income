@@ -1,5 +1,7 @@
 # Finite-Horizon Merton with Labor Income (PG-DPO Backward Solver)
-
+![Status](https://img.shields.io/badge/Status-Work_in_Progress-yellow)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 Exploratory research code for solving a finite-horizon Merton consumption–investment problem **with labor income** using a backward **Pontryagin-Guided Direct Policy Optimization (PG-DPO)** routine. The implementation focuses on the income-to-wealth ratio \(z = Y/X\) and learns time- and state-dependent investment \(\pi(t, z)\) and consumption \(\kappa(t, z)\) controls that align with analytic benchmarks.
 
 > **Status:** Research prototype; configurations and APIs may change without notice.
