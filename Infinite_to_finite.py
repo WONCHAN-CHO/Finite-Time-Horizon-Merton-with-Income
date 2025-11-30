@@ -369,7 +369,10 @@ def run_pgdpo_backward(T_max_target, k_anal, pi_anal):
             # D_now를 (B, 1)로 변환하여 연산
             R_total = R_total + (D_now.view(B, 1) * U_c * dt_torch).view(B)
 
-        return R_total, X.detach(), Y.detach()
+        R_total = torch.nan_to_num(R_total, nan=0.0, posinf=1e6, neginf=-1e6)
+        X_safe_out = torch.nan_to_num(X.detach(), nan=lb_w if lb_w else 1e-4)
+        Y_safe_out = torch.nan_to_num(Y.detach(), nan=0.0, posinf=1e6, neginf=-1e6)
+        return R_total, X_safe_out, Y_safe_out
 
     def sim(
         policy,
@@ -534,7 +537,13 @@ def run_pgdpo_backward(T_max_target, k_anal, pi_anal):
             lam_x, lam_y = torch.autograd.grad(
                 Umean.sum(), (Xg, Yg), create_graph=True, retain_graph=True
             )
+
+            # gradient가 불안정할 때 NaN이 발생하는 것을 방지
+            lam_x = torch.nan_to_num(lam_x, nan=0.0, posinf=1e6, neginf=-1e6)
+            lam_y = torch.nan_to_num(lam_y, nan=0.0, posinf=1e6, neginf=-1e6)
+
             (dxx,) = torch.autograd.grad(lam_x.sum(), (Xg,))
+            dxx = torch.nan_to_num(dxx, nan=0.0, posinf=1e6, neginf=-1e6)
 
             U_sum += Umean.unsqueeze(1).detach() * cur
             lam_x_sum += lam_x.detach() * cur
@@ -542,7 +551,11 @@ def run_pgdpo_backward(T_max_target, k_anal, pi_anal):
             tot += cur
 
         inv = 1.0 / max(1, tot)
-        return lam_x_sum * inv, dxx_sum * inv, (U_sum * inv).mean().item()
+        lam_x_avg = torch.nan_to_num(
+            lam_x_sum * inv, nan=0.0, posinf=1e6, neginf=-1e6
+        )
+        dxx_avg = torch.nan_to_num(dxx_sum * inv, nan=0.0, posinf=1e6, neginf=-1e6)
+        return lam_x_avg, dxx_avg, (U_sum * inv).mean().item()
 
     def pmp_from_costates_1d(
         X,
